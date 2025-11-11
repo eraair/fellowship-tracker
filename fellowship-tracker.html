@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#667eea">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Fellowship Roadmap Tracker</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='80' font-size='80'%3E🎯%3C/text%3E%3C/svg%3E">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        nav {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            padding: 12px 24px;
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .nav-btn:hover, .nav-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .gantt-container {
+            overflow-x: auto;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background: white;
+        }
+
+        .gantt-header {
+            display: flex;
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .gantt-label {
+            min-width: 250px;
+            padding: 15px;
+            border-right: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .gantt-timeline {
+            display: flex;
+            flex: 1;
+        }
+
+        .gantt-month {
+            min-width: 60px;
+            padding: 15px 5px;
+            text-align: center;
+            border-right: 1px solid rgba(255,255,255,0.3);
+            font-size: 0.8em;
+        }
+
+        .gantt-row {
+            display: flex;
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+        }
+
+        .gantt-row:hover {
+            background: #f8f9fa;
+        }
+
+        .gantt-task-label {
+            min-width: 250px;
+            padding: 15px;
+            border-right: 1px solid #ddd;
+            font-size: 0.9em;
+        }
+
+        .gantt-task-timeline {
+            display: flex;
+            flex: 1;
+            position: relative;
+            align-items: center;
+        }
+
+        .gantt-bar {
+            height: 30px;
+            border-radius: 5px;
+            position: absolute;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            color: white;
+            font-size: 0.8em;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .phase-1 { background: #4CAF50; }
+        .phase-2 { background: #2196F3; }
+        .phase-3 { background: #FF9800; }
+        .phase-4 { background: #9C27B0; }
+        .phase-5 { background: #F44336; }
+        .phase-6 { background: #00BCD4; }
+        .phase-7 { background: #607D8B; }
+
+        .checklist-phase {
+            margin-bottom: 30px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .checklist-header {
+            background: #667eea;
+            color: white;
+            padding: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .checklist-header:hover {
+            background: #5568d3;
+        }
+
+        .checklist-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .checklist-content.expanded {
+            max-height: 5000px;
+        }
+
+        .month-section {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .month-title {
+            font-size: 1.2em;
+            color: #667eea;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 10px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+
+        .checklist-item:hover {
+            background: #e9ecef;
+        }
+
+        .checklist-item input[type="checkbox"] {
+            margin-right: 10px;
+            margin-top: 3px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checklist-item.completed {
+            opacity: 0.6;
+            text-decoration: line-through;
+        }
+
+        .cost-summary {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .cost-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .cost-total {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+            padding-top: 15px;
+            border-top: 3px solid #667eea;
+        }
+
+        .progress-ring {
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+        }
+
+        .progress-text {
+            text-align: center;
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .nav-btn, .stats-bar {
+                display: none;
+            }
+        }
+
+        .timeline-legend {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 20px;
+            border-radius: 3px;
+        }
+
+        .export-btn {
+            padding: 12px 24px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px;
+            transition: background 0.3s;
+        }
+
+        .export-btn:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 Fellowship Roadmap Tracker</h1>
+            <p>Dr. Yaaqoob Alhammadi - ECFMG + USMLE + Pain Medicine Fellowship</p>
+            <p><strong>Start:</strong> November 2025 | <strong>Fellowship Begins:</strong> July 1, 2028 | <strong>Duration:</strong> 30 Months</p>
+        </header>
+
+        <div class="stats-bar">
+            <div class="stat-card">
+                <h3 id="totalMonths">30</h3>
+                <p>Total Months</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="completedTasks">0/250+</h3>
+                <p>Tasks Completed</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="totalCost">$26K-55K</h3>
+                <p>Total Investment</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="currentPhase">Phase 1</h3>
+                <p>Current Phase</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="progressPercent">0%</h3>
+                <p>Overall Progress</p>
+            </div>
+        </div>
+
+        <nav>
+            <button class="nav-btn active" onclick="showSection('gantt')">📊 Gantt Chart</button>
+            <button class="nav-btn" onclick="showSection('checklist')">✅ Checklist</button>
+            <button class="nav-btn" onclick="showSection('costs')">💰 Costs</button>
+            <button class="nav-btn" onclick="showSection('timeline')">📅 Timeline</button>
+            <button class="export-btn" onclick="exportProgress()">📥 Export Progress</button>
+        </nav>
+
+        <div class="content">
+            <!-- GANTT CHART SECTION -->
+            <div id="gantt" class="section active">
+                <h2>Project Gantt Chart</h2>
+                
+                <div class="timeline-legend">
+                    <div class="legend-item">
+                        <div class="legend-color phase-1"></div>
+                        <span>Phase 1: USMLE Step 1 (7 months)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color phase-2"></div>
+                        <span>Phase 2: USMLE Step 2 CK (5 months)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color phase-3"></div>
+                        <span>Phase 3: ECFMG Cert (3 months)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color phase-4"></div>
+                        <span>Phase 4: Applications (6 months)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color phase-5"></div>
+                        <span>Phase 5: Match & Prep (7 months)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color phase-6"></div>
+                        <span>Phase 6: Fellowship (12 months)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color phase-7"></div>
+                        <span>Phase 7: Return to UAE</span>
+                    </div>
+                </div>
+
+                <div class="gantt-container" id="ganttChart"></div>
+            </div>
+
+            <!-- CHECKLIST SECTION -->
+            <div id="checklist" class="section">
+                <h2>Interactive Checklist</h2>
+                <div id="checklistContainer"></div>
+            </div>
+
+            <!-- COSTS SECTION -->
+            <div id="costs" class="section">
+                <h2>Financial Summary</h2>
+                <div class="cost-summary" id="costSummary"></div>
+            </div>
+
+            <!-- TIMELINE SECTION -->
+            <div id="timeline" class="section">
+                <h2>Detailed Timeline</h2>
+                <div id="timelineDetails"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data structure
+        const roadmapData = {
+            phases: [
+                {
+                    name: "Phase 1: USMLE Step 1",
+                    start: 1,
+                    duration: 7,
+                    color: "phase-1",
+                    months: [
+                        {
+                            month: "Month 1 (Nov 2025)",
+                            tasks: [
+                                "Email ACGME-I to verify Tawam accreditation",
+                                "Create ECFMG account (OASIS)",
+                                "Link EPIC to ECFMG",
+                                "Purchase USMLE Step 1 materials ($608)",
+                                "Take NBME baseline assessment",
+                                "Create 6-month study schedule"
+                            ],
+                            cost: 758
+                        },
+                        {
+                            month: "Months 2-3 (Dec 2025-Jan 2026)",
+                            tasks: [
+                                "Study 3 hours daily weekdays",
+                                "Study 8 hours daily weekends (31 hours/week total)",
+                                "Complete 60% of Step 1 content",
+                                "Complete cardiovascular, respiratory, renal, GI, endocrine, reproductive systems",
+                                "Complete ECFMG Pathway 6 documentation",
+                                "Take NBME Practice Exam 25"
+                            ],
+                            cost: 258
+                        },
+                        {
+                            month: "Months 4-5 (Feb-Mar 2026)",
+                            tasks: [
+                                "Continue 25-30 hours weekly study",
+                                "Complete hematology, neurology, psychiatry, microbiology",
+                                "Complete immunology, pathology, biochemistry",
+                                "Take NBME 26 and 27",
+                                "Register for USMLE Step 1",
+                                "Target NBME score: 210+"
+                            ],
+                            cost: 1328
+                        },
+                        {
+                            month: "Months 6-7 (Apr-May 2026)",
+                            tasks: [
+                                "Final review: 40-50 hours weekly",
+                                "Second pass UWorld questions",
+                                "Take NBME 28, 29, UWSA 1 & 2",
+                                "Target practice scores: 220+",
+                                "USMLE Step 1 Exam (May 20-25, 2026)",
+                                "Begin fellowship program research"
+                            ],
+                            cost: 468
+                        }
+                    ]
+                },
+                {
+                    name: "Phase 2: USMLE Step 2 CK",
+                    start: 8,
+                    duration: 5,
+                    color: "phase-2",
+                    months: [
+                        {
+                            month: "Month 8 (Jun 2026)",
+                            tasks: [
+                                "USMLE Step 1 results released",
+                                "Purchase Step 2 CK materials ($489)",
+                                "Register for OET Medicine ($587)",
+                                "Create 4-month study plan",
+                                "Expand fellowship program list to 100"
+                            ],
+                            cost: 1076
+                        },
+                        {
+                            month: "Months 9-11 (Jul-Sep 2026)",
+                            tasks: [
+                                "Study 24-30 hours weekly for Step 2 CK",
+                                "Complete Internal Medicine, Surgery, OB/GYN, Pediatrics",
+                                "Take OET Medicine exam (August 2026)",
+                                "Complete 100% UWorld Step 2 CK",
+                                "Take NBME Step 2 CK Forms 9, 10, 11",
+                                "Register for Step 2 CK exam"
+                            ],
+                            cost: 1290
+                        },
+                        {
+                            month: "Month 12 (Oct 2026)",
+                            tasks: [
+                                "Final Step 2 CK preparation",
+                                "Take UWSA Step 2 CK",
+                                "Review weak areas",
+                                "USMLE Step 2 CK Exam (Oct 20-25, 2026)",
+                                "Draft personal statement",
+                                "Request letters of recommendation"
+                            ],
+                            cost: 45
+                        }
+                    ]
+                },
+                {
+                    name: "Phase 3: ECFMG Certification",
+                    start: 13,
+                    duration: 3,
+                    color: "phase-3",
+                    months: [
+                        {
+                            month: "Month 13 (Nov 2026)",
+                            tasks: [
+                                "Step 2 CK results released (target 240+)",
+                                "Complete ECFMG Pathway 6 requirements",
+                                "Submit ECFMG certification application",
+                                "Finalize personal statement",
+                                "Collect 3-4 letters of recommendation"
+                            ],
+                            cost: 150
+                        },
+                        {
+                            month: "Month 14 (Dec 2026)",
+                            tasks: [
+                                "Receive ECFMG certificate",
+                                "Prepare all ERAS documents",
+                                "Email 50 target programs",
+                                "Professional headshot photo",
+                                "Track program responses"
+                            ],
+                            cost: 150
+                        },
+                        {
+                            month: "Month 15 (Jan 2027)",
+                            tasks: [
+                                "Finalize program list (50 programs)",
+                                "Customize personal statements",
+                                "Confirm all letters uploaded",
+                                "Budget for interview season",
+                                "Prepare interview responses"
+                            ],
+                            cost: 0
+                        }
+                    ]
+                },
+                {
+                    name: "Phase 4: Applications & Interviews",
+                    start: 16,
+                    duration: 6,
+                    color: "phase-4",
+                    months: [
+                        {
+                            month: "Month 16 (Feb 2027)",
+                            tasks: [
+                                "Review all application materials",
+                                "Practice interview responses",
+                                "Research each program thoroughly",
+                                "Optional: Attend AAPM Annual Meeting"
+                            ],
+                            cost: 750
+                        },
+                        {
+                            month: "Month 17 (Mar 2027)",
+                            tasks: [
+                                "Submit ERAS applications (50 programs)",
+                                "Register with NRMP Specialties Match",
+                                "Monitor email for interview invitations",
+                                "Respond to invitations within 24 hours"
+                            ],
+                            cost: 1349
+                        },
+                        {
+                            month: "Months 18-19 (Apr-May 2027)",
+                            tasks: [
+                                "Complete 10-20 fellowship interviews",
+                                "Research each program before interview",
+                                "Send thank-you emails within 24 hours",
+                                "Track interview impressions",
+                                "Prepare thoughtful questions"
+                            ],
+                            cost: 1750
+                        },
+                        {
+                            month: "Month 20 (Jun 2027)",
+                            tasks: [
+                                "Complete all interviews",
+                                "Send thank-you notes",
+                                "Reflect on program fit",
+                                "Create preliminary rank list",
+                                "Discuss with mentors"
+                            ],
+                            cost: 0
+                        },
+                        {
+                            month: "Month 21 (Jul 2027)",
+                            tasks: [
+                                "Finalize rank list",
+                                "Submit rank list (late July deadline)",
+                                "Rank ALL acceptable programs",
+                                "Wait for Match Day"
+                            ],
+                            cost: 0
+                        }
+                    ]
+                },
+                {
+                    name: "Phase 5: Match Results & Visa",
+                    start: 22,
+                    duration: 7,
+                    color: "phase-5",
+                    months: [
+                        {
+                            month: "Month 22 (Aug 2027)",
+                            tasks: [
+                                "MATCH DAY - Results released",
+                                "Contact program director",
+                                "Request onboarding information",
+                                "Begin visa processing"
+                            ],
+                            cost: 0
+                        },
+                        {
+                            month: "Months 23-26 (Sep-Dec 2027)",
+                            tasks: [
+                                "Receive DS-2019 from program",
+                                "Complete DS-160 visa application",
+                                "Pay SEVIS fee ($220)",
+                                "Schedule visa interview at US Embassy Abu Dhabi",
+                                "Apply for state medical training license",
+                                "Complete onboarding paperwork"
+                            ],
+                            cost: 1155
+                        },
+                        {
+                            month: "Months 27-28 (Jan-Feb 2028)",
+                            tasks: [
+                                "Research housing near program",
+                                "Arrange finances and banking",
+                                "Book flights to USA",
+                                "Notify Tawam Hospital",
+                                "Budget for relocation"
+                            ],
+                            cost: 20750
+                        }
+                    ]
+                },
+                {
+                    name: "Phase 6: Fellowship Training",
+                    start: 29,
+                    duration: 14,
+                    color: "phase-6",
+                    months: [
+                        {
+                            month: "Months 29-30 (Mar-Jun 2028)",
+                            tasks: [
+                                "Arrive in USA 2-4 weeks early",
+                                "Setup apartment",
+                                "Obtain Social Security Number",
+                                "Get driver's license",
+                                "Complete BLS/ACLS recertification",
+                                "Attend program orientation"
+                            ],
+                            cost: 875
+                        },
+                        {
+                            month: "Months 31-42 (Jul 2028-Jun 2029)",
+                            tasks: [
+                                "FELLOWSHIP START - July 1, 2028",
+                                "Complete 12-month pain medicine training",
+                                "Master interventional procedures",
+                                "Complete research project",
+                                "Prepare for board certification",
+                                "Network with faculty and fellows"
+                            ],
+                            cost: 0
+                        }
+                    ]
+                },
+                {
+                    name: "Phase 7: Return to UAE",
+                    start: 43,
+                    duration: 1,
+                    color: "phase-7",
+                    months: [
+                        {
+                            month: "Month 43 (Jul 2029)",
+                            tasks: [
+                                "Complete fellowship June 30, 2029",
+                                "Receive ACGME fellowship certificate",
+                                "Return to UAE",
+                                "Submit credentials to DOH Abu Dhabi",
+                                "Update medical license - add Pain Medicine",
+                                "Begin Consultant position"
+                            ],
+                            cost: 0
+                        }
+                    ]
+                }
+            ]
+        };
+
+        // Generate Gantt Chart
+        function generateGanttChart() {
+            const ganttChart = document.getElementById('ganttChart');
+            
+            // Create header with months
+            let headerHTML = '<div class="gantt-header">';
+            headerHTML += '<div class="gantt-label">Phase / Task</div>';
+            headerHTML += '<div class="gantt-timeline">';
+            
+            for (let i = 1; i <= 43; i++) {
+                const monthName = getMonthName(i);
+                headerHTML += `<div class="gantt-month">${monthName}</div>`;
+            }
+            
+            headerHTML += '</div></div>';
+            
+            // Create rows for each phase
+            let rowsHTML = '';
+            roadmapData.phases.forEach(phase => {
+                rowsHTML += '<div class="gantt-row">';
+                rowsHTML += `<div class="gantt-task-label"><strong>${phase.name}</strong></div>`;
+                rowsHTML += '<div class="gantt-task-timeline">';
+                
+                const left = ((phase.start - 1) / 43) * 100;
+                const width = (phase.duration / 43) * 100;
+                
+                rowsHTML += `<div class="gantt-bar ${phase.color}" style="left: ${left}%; width: ${width}%;">
+                    ${phase.duration}m
+                </div>`;
+                
+                rowsHTML += '</div></div>';
+            });
+            
+            ganttChart.innerHTML = headerHTML + rowsHTML;
+        }
+
+        function getMonthName(monthNum) {
+            const months = [
+                'Nov 25', 'Dec 25', 'Jan 26', 'Feb 26', 'Mar 26', 'Apr 26', 'May 26', 'Jun 26',
+                'Jul 26', 'Aug 26', 'Sep 26', 'Oct 26', 'Nov 26', 'Dec 26', 'Jan 27', 'Feb 27',
+                'Mar 27', 'Apr 27', 'May 27', 'Jun 27', 'Jul 27', 'Aug 27', 'Sep 27', 'Oct 27',
+                'Nov 27', 'Dec 27', 'Jan 28', 'Feb 28', 'Mar 28', 'Apr 28', 'May 28', 'Jun 28',
+                'Jul 28', 'Aug 28', 'Sep 28', 'Oct 28', 'Nov 28', 'Dec 28', 'Jan 29', 'Feb 29',
+                'Mar 29', 'Apr 29', 'May 29'
+            ];
+            return months[monthNum - 1] || `M${monthNum}`;
+        }
+
+        // Generate Checklist
+        function generateChecklist() {
+            const container = document.getElementById('checklistContainer');
+            let html = '';
+            
+            roadmapData.phases.forEach((phase, phaseIdx) => {
+                html += `<div class="checklist-phase">`;
+                html += `<div class="checklist-header" onclick="togglePhase(${phaseIdx})">
+                    <span><strong>${phase.name}</strong> (${phase.duration} months)</span>
+                    <span id="phase-progress-${phaseIdx}">0/${getTotalTasks(phase)} completed</span>
+                </div>`;
+                html += `<div class="checklist-content" id="phase-content-${phaseIdx}">`;
+                
+                phase.months.forEach((monthData, monthIdx) => {
+                    html += `<div class="month-section">`;
+                    html += `<div class="month-title">${monthData.month}</div>`;
+                    
+                    monthData.tasks.forEach((task, taskIdx) => {
+                        const checkId = `check-${phaseIdx}-${monthIdx}-${taskIdx}`;
+                        html += `<div class="checklist-item">
+                            <input type="checkbox" id="${checkId}" onchange="updateProgress()">
+                            <label for="${checkId}">${task}</label>
+                        </div>`;
+                    });
+                    
+                    if (monthData.cost > 0) {
+                        html += `<div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 5px;">
+                            <strong>💰 Cost this period: $${monthData.cost.toLocaleString()}</strong>
+                        </div>`;
+                    }
+                    
+                    html += `</div>`;
+                });
+                
+                html += `</div></div>`;
+            });
+            
+            container.innerHTML = html;
+            loadProgress();
+        }
+
+        function getTotalTasks(phase) {
+            return phase.months.reduce((sum, month) => sum + month.tasks.length, 0);
+        }
+
+        function togglePhase(phaseIdx) {
+            const content = document.getElementById(`phase-content-${phaseIdx}`);
+            content.classList.toggle('expanded');
+        }
+
+        // Generate Cost Summary
+        function generateCostSummary() {
+            const container = document.getElementById('costSummary');
+            
+            const costs = {
+                'USMLE & ECFMG': 4502,
+                'Fellowship Application': 2999,
+                'Visa & Licensing': 1155,
+                'Relocation & Setup (Low)': 18300,
+                'Relocation & Setup (High)': 44800
+            };
+            
+            let html = '<h3>Upfront Investment Breakdown</h3>';
+            
+            for (const [category, amount] of Object.entries(costs)) {
+                if (category.includes('High')) continue;
+                const displayAmount = category.includes('Low') ? 
+                    `$${costs['Relocation & Setup (Low)'].toLocaleString()} - $${costs['Relocation & Setup (High)'].toLocaleString()}` :
+                    `$${amount.toLocaleString()}`;
+                
+                html += `<div class="cost-item">
+                    <span>${category.replace(' (Low)', '')}</span>
+                    <strong>${displayAmount}</strong>
+                </div>`;
+            }
+            
+            html += `<div class="cost-item cost-total">
+                <span>TOTAL UPFRONT INVESTMENT</span>
+                <span>$26,000 - $55,000</span>
+            </div>`;
+            
+            html += `<div style="margin-top: 30px; padding: 20px; background: #d4edda; border-radius: 10px;">
+                <h3 style="color: #155724; margin-bottom: 10px;">Return on Investment</h3>
+                <div class="cost-item" style="border: none;">
+                    <span>Annual Salary Increase (Post-Fellowship)</span>
+                    <strong style="color: #155724;">~$136,000/year</strong>
+                </div>
+                <div class="cost-item" style="border: none;">
+                    <span>Break-even Time</span>
+                    <strong style="color: #155724;">~2 years</strong>
+                </div>
+                <div class="cost-item" style="border: none;">
+                    <span>30-Year Career Value</span>
+                    <strong style="color: #155724;">$4,080,000+</strong>
+                </div>
+                <div class="cost-item" style="border: none; font-size: 1.2em;">
+                    <span>Total ROI</span>
+                    <strong style="color: #155724;">1,520%</strong>
+                </div>
+            </div>`;
+            
+            container.innerHTML = html;
+        }
+
+        // Generate Timeline Details
+        function generateTimeline() {
+            const container = document.getElementById('timelineDetails');
+            let html = '';
+            
+            roadmapData.phases.forEach(phase => {
+                html += `<div class="checklist-phase">`;
+                html += `<div class="checklist-header" style="cursor: default;">
+                    <span><strong>${phase.name}</strong></span>
+                    <span>Months ${phase.start}-${phase.start + phase.duration - 1}</span>
+                </div>`;
+                html += `<div class="checklist-content expanded">`;
+                
+                phase.months.forEach(monthData => {
+                    html += `<div class="month-section">`;
+                    html += `<div class="month-title">${monthData.month}</div>`;
+                    html += `<ul style="margin-left: 20px;">`;
+                    monthData.tasks.forEach(task => {
+                        html += `<li style="margin: 8px 0;">${task}</li>`;
+                    });
+                    html += `</ul>`;
+                    html += `</div>`;
+                });
+                
+                html += `</div></div>`;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // Progress tracking
+        function updateProgress() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const checked = document.querySelectorAll('input[type="checkbox"]:checked').length;
+            const total = checkboxes.length;
+            const percentage = Math.round((checked / total) * 100);
+            
+            document.getElementById('completedTasks').textContent = `${checked}/${total}`;
+            document.getElementById('progressPercent').textContent = `${percentage}%`;
+            
+            // Update phase progress
+            roadmapData.phases.forEach((phase, phaseIdx) => {
+                const phaseChecks = document.querySelectorAll(`input[id^="check-${phaseIdx}-"]:checked`).length;
+                const phaseTotal = getTotalTasks(phase);
+                document.getElementById(`phase-progress-${phaseIdx}`).textContent = 
+                    `${phaseChecks}/${phaseTotal} completed`;
+            });
+            
+            // Mark completed items
+            checkboxes.forEach(checkbox => {
+                const item = checkbox.closest('.checklist-item');
+                if (checkbox.checked) {
+                    item.classList.add('completed');
+                } else {
+                    item.classList.remove('completed');
+                }
+            });
+            
+            saveProgress();
+        }
+
+        // Save/Load progress to localStorage
+        function saveProgress() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const progress = {};
+            checkboxes.forEach(checkbox => {
+                progress[checkbox.id] = checkbox.checked;
+            });
+            localStorage.setItem('fellowshipProgress', JSON.stringify(progress));
+        }
+
+        function loadProgress() {
+            const saved = localStorage.getItem('fellowshipProgress');
+            if (saved) {
+                const progress = JSON.parse(saved);
+                Object.keys(progress).forEach(id => {
+                    const checkbox = document.getElementById(id);
+                    if (checkbox) {
+                        checkbox.checked = progress[id];
+                    }
+                });
+                updateProgress();
+            }
+        }
+
+        // Export progress
+        function exportProgress() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const checked = document.querySelectorAll('input[type="checkbox"]:checked').length;
+            const total = checkboxes.length;
+            const percentage = Math.round((checked / total) * 100);
+            
+            let exportText = `Dr. Yaaqoob's Fellowship Progress Report\n`;
+            exportText += `Generated: ${new Date().toLocaleDateString()}\n`;
+            exportText += `Overall Progress: ${checked}/${total} tasks (${percentage}%)\n\n`;
+            
+            roadmapData.phases.forEach((phase, phaseIdx) => {
+                const phaseChecks = document.querySelectorAll(`input[id^="check-${phaseIdx}-"]:checked`).length;
+                const phaseTotal = getTotalTasks(phase);
+                exportText += `\n${phase.name}: ${phaseChecks}/${phaseTotal} completed\n`;
+                exportText += `${'='.repeat(50)}\n`;
+                
+                phase.months.forEach((monthData, monthIdx) => {
+                    exportText += `\n${monthData.month}\n`;
+                    monthData.tasks.forEach((task, taskIdx) => {
+                        const checkId = `check-${phaseIdx}-${monthIdx}-${taskIdx}`;
+                        const checkbox = document.getElementById(checkId);
+                        const status = checkbox && checkbox.checked ? '✓' : '☐';
+                        exportText += `  ${status} ${task}\n`;
+                    });
+                });
+            });
+            
+            const blob = new Blob([exportText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `fellowship-progress-${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Navigation
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            document.getElementById(sectionId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(reg => console.log('Service Worker registered'))
+                .catch(err => console.log('Service Worker registration failed'));
+        }
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            showInstallButton();
+        });
+
+        function showInstallButton() {
+            const header = document.querySelector('header');
+            const installBtn = document.createElement('button');
+            installBtn.className = 'export-btn';
+            installBtn.innerHTML = '📱 Install App on Phone';
+            installBtn.style.margin = '10px';
+            installBtn.onclick = async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    deferredPrompt = null;
+                    installBtn.style.display = 'none';
+                }
+            };
+            header.appendChild(installBtn);
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            generateGanttChart();
+            generateChecklist();
+            generateCostSummary();
+            generateTimeline();
+        };
+    </script>
+</body>
+</html>
